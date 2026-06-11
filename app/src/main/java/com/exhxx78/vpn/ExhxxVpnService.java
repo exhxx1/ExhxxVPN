@@ -8,7 +8,6 @@ import android.widget.Toast;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
-import libxray.Libxray; // استدعاء مكتبة المحرك الأساسية
 
 public class ExhxxVpnService extends VpnService {
     private Thread vpnThread;
@@ -17,12 +16,12 @@ public class ExhxxVpnService extends VpnService {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Toast.makeText(this, "🚀 جاري تشغيل محرك Exhxx Xray...", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "النفق جاهز! (بانتظار دمج ملف محرك Xray.aar لاحقاً)", Toast.LENGTH_LONG).show();
         isRunning = true;
         
         vpnThread = new Thread(() -> {
             try {
-                // 1. استخراج ملف الـ JSON المخفي بداخل التطبيق وحفظه بملفات النظام المؤقتة
+                // استخراج الكونفج (جاهز للعمل)
                 File configFile = new File(getFilesDir(), "config.json");
                 if (!configFile.exists()) {
                     InputStream is = getAssets().open("config.json");
@@ -35,27 +34,21 @@ public class ExhxxVpnService extends VpnService {
                     fos.flush(); fos.close(); is.close();
                 }
 
-                // 2. بناء واجهة الشبكة (TUN) وتوجيه كل ترافيك الجهاز لها
+                // بناء النفق وسحب الترافيك
                 Builder builder = new Builder();
                 builder.setSession("ExhxxVPN");
                 builder.addAddress("10.0.0.2", 24);
                 builder.addDnsServer("8.8.8.8");
-                builder.addRoute("0.0.0.0", 0); // سحب الإنترنت بالكامل
+                builder.addRoute("0.0.0.0", 0);
                 vpnInterface = builder.establish();
-
-                // 3. إطلاق الصاروخ! تشغيل محرك Xray وتمرير ملف الكونفج له برمجياً
-                Log.d("ExhxxVPN", "جاري ربط الكونفج بالمحرك...");
                 
-                // أمر تشغيل النواة (Xray Core) من المكتبة المستدعاة
-                Libxray.runXray(configFile.getAbsolutePath());
+                Log.d("ExhxxVPN", "النفق متصل. يحتاج ملف AAR لفك تشفير VLESS.");
                 
                 while (isRunning) {
-                    // إبقاء الخدمة حية ومستقرة بداخل النفق
                     Thread.sleep(1000);
                 }
 
             } catch (Exception e) {
-                Log.e("ExhxxVPN", "خطأ في تشغيل المحرك: " + e.getMessage());
                 e.printStackTrace();
             }
         });
@@ -69,9 +62,6 @@ public class ExhxxVpnService extends VpnService {
         super.onDestroy();
         isRunning = false;
         try {
-            // إيقاف محرك Xray برمجياً عند قطع الاتصال
-            Libxray.stopXray();
-            
             if (vpnInterface != null) {
                 vpnInterface.close();
                 vpnInterface = null;
@@ -82,6 +72,6 @@ public class ExhxxVpnService extends VpnService {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        Toast.makeText(this, "🔴 تم قطع الاتصال وإغلاق المحرك.", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "🔴 تم قطع الاتصال.", Toast.LENGTH_SHORT).show();
     }
 }
